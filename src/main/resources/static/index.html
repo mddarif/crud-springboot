@@ -8,7 +8,6 @@
             font-family: Arial, sans-serif;
             background: linear-gradient(to right, #4e73df, #1cc88a);
             margin: 0;
-            padding: 0;
         }
 
         .container {
@@ -20,10 +19,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        h2 {
-            text-align: center;
-            color: #333;
-        }
+        h2 { text-align: center; }
 
         input {
             width: 100%;
@@ -34,23 +30,19 @@
         }
 
         button {
-            padding: 10px 15px;
-            background-color: #4e73df;
-            color: white;
+            padding: 8px 12px;
+            margin: 5px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
+            color: white;
         }
 
-        button:hover {
-            background-color: #2e59d9;
-        }
+        .add-btn { background: #4e73df; }
+        .edit-btn { background: #f6c23e; }
+        .delete-btn { background: #e74a3b; }
 
-        ul {
-            list-style: none;
-            padding: 0;
-        }
+        ul { list-style: none; padding: 0; }
 
         li {
             background: #f8f9fc;
@@ -61,16 +53,7 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .delete-btn {
-            background-color: #e74a3b;
-        }
-
-        .delete-btn:hover {
-            background-color: #c0392b;
-        }
     </style>
-
 </head>
 <body>
 
@@ -78,11 +61,13 @@
 
     <h2>Employee Management System</h2>
 
+    <input type="hidden" id="employeeId">
+
     <input type="text" id="name" placeholder="Enter Name">
     <input type="text" id="department" placeholder="Enter Department">
     <input type="number" id="salary" placeholder="Enter Salary">
 
-    <button onclick="addEmployee()">Add Employee</button>
+    <button class="add-btn" onclick="saveEmployee()">Save</button>
 
     <h2>Employee List</h2>
     <ul id="employeeList"></ul>
@@ -109,9 +94,10 @@ function fetchEmployees() {
                         ${emp.department} | 
                         ₹${emp.salary}
                     </span>
-                    <button class="delete-btn" onclick="deleteEmployee(${emp.id})">
-                        Delete
-                    </button>
+                    <div>
+                        <button class="edit-btn" onclick="editEmployee(${emp.id}, '${emp.name}', '${emp.department}', ${emp.salary})">Edit</button>
+                        <button class="delete-btn" onclick="deleteEmployee(${emp.id})">Delete</button>
+                    </div>
                 `;
 
                 list.appendChild(li);
@@ -119,27 +105,53 @@ function fetchEmployees() {
         });
 }
 
-function addEmployee() {
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            name: document.getElementById("name").value,
-            department: document.getElementById("department").value,
-            salary: document.getElementById("salary").value
-        })
-    }).then(() => {
-        fetchEmployees();
-        document.getElementById("name").value = "";
-        document.getElementById("department").value = "";
-        document.getElementById("salary").value = "";
-    });
+function saveEmployee() {
+    const id = document.getElementById("employeeId").value;
+    const name = document.getElementById("name").value;
+    const department = document.getElementById("department").value;
+    const salary = document.getElementById("salary").value;
+
+    if (id) {
+        // UPDATE
+        fetch(API_URL + "/" + id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, department, salary })
+        }).then(() => {
+            clearForm();
+            fetchEmployees();
+        });
+    } else {
+        // CREATE
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, department, salary })
+        }).then(() => {
+            clearForm();
+            fetchEmployees();
+        });
+    }
+}
+
+function editEmployee(id, name, department, salary) {
+    document.getElementById("employeeId").value = id;
+    document.getElementById("name").value = name;
+    document.getElementById("department").value = department;
+    document.getElementById("salary").value = salary;
 }
 
 function deleteEmployee(id) {
     fetch(API_URL + "/" + id, {
         method: "DELETE"
     }).then(() => fetchEmployees());
+}
+
+function clearForm() {
+    document.getElementById("employeeId").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("department").value = "";
+    document.getElementById("salary").value = "";
 }
 
 fetchEmployees();
